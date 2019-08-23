@@ -35,17 +35,21 @@ package com.yptheangel.dl4jandroid.yolo_objdetection.utils;
 import android.content.Context;
 import android.util.Log;
 
-import org.bytedeco.javacpp.opencv_core.Mat;
-import org.bytedeco.javacpp.opencv_objdetect.CascadeClassifier;
-
+//import org.bytedeco.javacpp.opencv_core.Mat;
+//import org.bytedeco.javacpp.opencv_objdetect.CascadeClassifier;
+import org.bytedeco.opencv.opencv_core.Mat;
+import org.bytedeco.opencv.opencv_objdetect.CascadeClassifier;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static org.bytedeco.javacpp.opencv_imgcodecs.imwrite;
-import static org.bytedeco.javacpp.opencv_imgproc.COLOR_RGB2BGR;
-import static org.bytedeco.javacpp.opencv_imgproc.cvtColor;
+import static org.bytedeco.opencv.global.opencv_imgcodecs.imwrite;
+import static org.bytedeco.opencv.global.opencv_imgproc.*;
+
+//import static org.bytedeco.javacpp.opencv_imgcodecs.imwrite;
+//import static org.bytedeco.javacpp.opencv_imgproc.COLOR_RGB2BGR;
+//import static org.bytedeco.javacpp.opencv_imgproc.cvtColor;
 
 /**
  * Defined several functions to manage local storage.

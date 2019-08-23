@@ -1,24 +1,52 @@
 package com.yptheangel.dl4jandroid.yolo_objdetection;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.Nullable;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.yptheangel.dl4jandroid.yolo_objdetection.utils.StorageHelper;
 
-import org.bytedeco.javacpp.opencv_core;
-import org.bytedeco.javacpp.opencv_objdetect;
+import com.yptheangel.dl4jandroid.yolo_objdetection.utils.VOCLabelsAndroid;
 
-import static org.bytedeco.javacpp.opencv_core.LINE_8;
-import static org.bytedeco.javacpp.opencv_imgproc.CV_BGR2GRAY;
-import static org.bytedeco.javacpp.opencv_imgproc.cvtColor;
-import static org.bytedeco.javacpp.opencv_imgproc.rectangle;
+import static android.os.Environment.getExternalStoragePublicDirectory;
+import static org.bytedeco.opencv.global.opencv_imgproc.*;
+import org.bytedeco.opencv.opencv_core.Mat;
+import org.bytedeco.opencv.opencv_objdetect.CascadeClassifier;
+
+import org.bytedeco.opencv.opencv_core.Point;
+import org.bytedeco.opencv.opencv_core.RectVector;
+import org.bytedeco.opencv.opencv_core.Scalar;
+import org.bytedeco.opencv.opencv_core.Size;
+import org.datavec.image.loader.NativeImageLoader;
+import org.datavec.image.transform.ColorConversionTransform;
+import org.deeplearning4j.nn.graph.ComputationGraph;
+import org.deeplearning4j.util.ModelSerializer;
+import org.deeplearning4j.zoo.ZooModel;
+import org.deeplearning4j.zoo.model.TinyYOLO;
+import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
+
+import java.io.IOException;
+import java.util.ArrayList;
 
 public class ObjDetection extends Activity implements CvCameraPreview.CvCameraViewListener {
-    private opencv_objdetect.CascadeClassifier faceDetector;
+//    private CascadeClassifier faceDetector;
     private int absoluteFaceSize = 0;
     private CvCameraPreview cameraView;
+
+    private static final int gridWidth = 13;
+    private static final int gridHeight = 13;
+    private static double detectionThreshold = 0.5;
+    private static final int tinyyolowidth = 416;
+    private static final int tinyyoloheight = 416;
+
+    String LOG_TAG="DEMO_ObjDetection";
+
+    ComputationGraph initializedModel =null;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -32,7 +60,34 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... voids) {
-                faceDetector = StorageHelper.loadClassifierCascade(ObjDetection.this, R.raw.frontalface);
+
+//            ZooModel model = TinyYOLO.builder().numClasses(0).build();
+
+//            try {
+////                initializedModel = (ComputationGraph) model.initPretrained();
+//                initializedModel =ModelSerializer.restoreComputationGraph(getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/tiny-yolo-voc_dl4j_inference.v2.zip");
+//                Log.i(LOG_TAG,initializedModel.summary());
+//
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            if (initializedModel != null) {
+//                Log.i(LOG_TAG,initializedModel.summary());
+//                Log.i(LOG_TAG,"Yeeha!");
+//            }
+//            NativeImageLoader loader = new NativeImageLoader(tinyyolowidth, tinyyoloheight, 3, new ColorConversionTransform(COLOR_BGR2RGB));
+//            ImagePreProcessingScaler scaler = new ImagePreProcessingScaler(0, 1);
+
+                try {
+                    ArrayList<String> labels = new VOCLabelsAndroid().getLabels();
+
+                    Log.i(LOG_TAG,"Labels loaded!");
+                    Log.i(LOG_TAG,labels.toString());
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 return null;
             }
         }.execute();
@@ -49,26 +104,27 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
     }
 
     @Override
-    public opencv_core.Mat onCameraFrame(opencv_core.Mat rgbaMat) {
-        if (faceDetector != null) {
-            opencv_core.Mat grayMat = new opencv_core.Mat(rgbaMat.rows(), rgbaMat.cols());
+    public Mat onCameraFrame(Mat rgbaMat) {
 
-            cvtColor(rgbaMat, grayMat, CV_BGR2GRAY);
-
-            opencv_core.RectVector faces = new opencv_core.RectVector();
-            faceDetector.detectMultiScale(grayMat, faces, 1.25f, 3, 1,
-                    new opencv_core.Size(absoluteFaceSize, absoluteFaceSize),
-                    new opencv_core.Size(4 * absoluteFaceSize, 4 * absoluteFaceSize));
-            if (faces.size() == 1) {
-                int x = faces.get(0).x();
-                int y = faces.get(0).y();
-                int w = faces.get(0).width();
-                int h = faces.get(0).height();
-                rectangle(rgbaMat, new opencv_core.Point(x, y), new opencv_core.Point(x + w, y + h), opencv_core.Scalar.GREEN, 2, LINE_8, 0);
-            }
-
-            grayMat.release();
-        }
+//        if (faceDetector != null) {
+//            Mat grayMat = new Mat(rgbaMat.rows(), rgbaMat.cols());
+//
+//
+//            cvtColor(rgbaMat, grayMat, CV_BGR2GRAY);
+//
+//            RectVector faces = new RectVector();
+//            faceDetector.detectMultiScale(grayMat, faces, 1.25f, 3, 1,
+//                    new Size(absoluteFaceSize, absoluteFaceSize),
+//                    new Size(4 * absoluteFaceSize, 4 * absoluteFaceSize));
+//            if (faces.size() == 1) {
+//                int x = faces.get(0).x();
+//                int y = faces.get(0).y();
+//                int w = faces.get(0).width();
+//                int h = faces.get(0).height();
+//                rectangle(rgbaMat, new Point(x, y), new Point(x + w, y + h), Scalar.GREEN, 2, LINE_8, 0);
+//            }
+//            grayMat.release();
+//        }
 
         return rgbaMat;
     }

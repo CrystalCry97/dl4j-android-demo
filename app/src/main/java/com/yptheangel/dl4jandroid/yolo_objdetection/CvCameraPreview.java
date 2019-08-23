@@ -20,7 +20,10 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import org.bytedeco.javacpp.opencv_core.Mat;
+import org.bytedeco.opencv.opencv_core.*;
+
+//import org.bytedeco.javacpp.opencv_core.Mat;
+
 import org.bytedeco.javacv.AndroidFrameConverter;
 import org.bytedeco.javacv.FFmpegFrameFilter;
 import org.bytedeco.javacv.Frame;
@@ -31,7 +34,15 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import static org.bytedeco.javacpp.avutil.AV_PIX_FMT_NV21;
+//import static org.bytedeco.javacpp.avutil.AV_PIX_FMT_NV21;
+//import static org.bytedeco.ffmpeg.global.avutil.AV_PIX_FMT_NV21;
+//import org.bytedeco.ffmpeg.avutil.*;
+
+import org.bytedeco.ffmpeg.global.avutil.*;
+//import org.bytedeco.ffmpeg.avutil..;
+import static org.bytedeco.ffmpeg.global.avutil.AV_PIX_FMT_NV21;
+
+
 
 //public class CvCameraPreview extends SurfaceView implements SurfaceHolder.Callback, Camera.PreviewCallback {
 public class CvCameraPreview extends SurfaceView implements SurfaceHolder.Callback, Camera.PreviewCallback {
@@ -672,6 +683,8 @@ public class CvCameraPreview extends SurfaceView implements SurfaceHolder.Callba
 
         filter = new FFmpegFrameFilter(transposeCode + "," + formatCode, width, height);
         filter.setPixelFormat(AV_PIX_FMT_NV21);
+//        filter.setPixelFormat(24);
+
 
         Log.i(LOG_TAG, "filter initialize success");
     }
