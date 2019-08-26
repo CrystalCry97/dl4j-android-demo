@@ -21,7 +21,6 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import org.bytedeco.opencv.opencv_core.*;
-
 //import org.bytedeco.javacpp.opencv_core.Mat;
 
 import org.bytedeco.javacv.AndroidFrameConverter;
@@ -42,13 +41,10 @@ import org.bytedeco.ffmpeg.global.avutil.*;
 //import org.bytedeco.ffmpeg.avutil..;
 import static org.bytedeco.ffmpeg.global.avutil.AV_PIX_FMT_NV21;
 
-
-
 //public class CvCameraPreview extends SurfaceView implements SurfaceHolder.Callback, Camera.PreviewCallback {
 public class CvCameraPreview extends SurfaceView implements SurfaceHolder.Callback, Camera.PreviewCallback {
 
-    private final String LOG_TAG = "CvCameraPreview";
-
+    String LOG_TAG = "DEMO_CvCameraPreview";
     private static final int STOPPED = 0;
     private static final int STARTED = 1;
 
