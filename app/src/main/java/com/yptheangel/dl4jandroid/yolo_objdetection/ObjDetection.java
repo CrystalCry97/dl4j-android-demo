@@ -18,6 +18,7 @@ import org.datavec.image.loader.NativeImageLoader;
 import org.datavec.image.transform.ColorConversionTransform;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.layers.objdetect.DetectedObject;
+import org.deeplearning4j.nn.layers.objdetect.Yolo2OutputLayer;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
@@ -36,9 +37,15 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
     private static final int tinyyolowidth = 416;
     private static final int tinyyoloheight = 416;
 
+//    Yolo2OutputLayer yout=null;
     org.deeplearning4j.nn.layers.objdetect.Yolo2OutputLayer yout=null;
+
     ComputationGraph model =null;
     VOCLabelsAndroid labels = null;
+
+    //As mentioned in docs, input image should be converted to RGB and scaled to range 0 to 1.
+    NativeImageLoader loader = new NativeImageLoader(tinyyolowidth, tinyyoloheight, 3, new ColorConversionTransform(COLOR_BGR2RGB));
+    ImagePreProcessingScaler scaler = new ImagePreProcessingScaler(0, 1);
 
     @Override
 //    protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -50,7 +57,7 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
         cameraView = findViewById(R.id.camera_view);
         cameraView.setCvCameraViewListener(this);
 
-        AsyncTaskLoader dependencies_loader = new AsyncTaskLoader();
+        LoadFiles dependencies_loader = new LoadFiles();
         dependencies_loader.execute();
     }
 
@@ -66,25 +73,21 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
     @Override
     public Mat onCameraFrame(Mat rgbaMat) {
 
-        //As mentioned in docs, input image should be converted to RGB and scaled to range 0 to 1.
-        NativeImageLoader loader = new NativeImageLoader(tinyyolowidth, tinyyoloheight, 3, new ColorConversionTransform(COLOR_BGR2RGB));
-        ImagePreProcessingScaler scaler = new ImagePreProcessingScaler(0, 1);
-
+//        //As mentioned in docs, input image should be converted to RGB and scaled to range 0 to 1.
+//        NativeImageLoader loader = new NativeImageLoader(tinyyolowidth, tinyyoloheight, 3, new ColorConversionTransform(COLOR_BGR2RGB));
+//        ImagePreProcessingScaler scaler = new ImagePreProcessingScaler(0, 1);
         int w = rgbaMat.cols();
         int h = rgbaMat.rows();
         INDArray inputImage = null;
         Mat resizedImage = new Mat();//rawImage);
 
         if (model != null) {
-
 //            Mat rawFrame = new Mat(rgbaMat.rows(), rgbaMat.cols());
-
             long start_time=System.nanoTime();
             putText(rgbaMat, "Model loaded", new Point(70, 40), FONT_HERSHEY_DUPLEX, 1, Scalar.GREEN);
             resize(rgbaMat, resizedImage, new Size(tinyyolowidth, tinyyoloheight));
             long puttextresize= System.nanoTime();
             long elapsed_time_puttextresize= puttextresize-start_time;
-
             try {
                 inputImage = loader.asMatrix(resizedImage);
             } catch (IOException e) {
@@ -95,7 +98,6 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
             long matrixload_scaler= System.nanoTime();
             long elapsed_time_matrixload_scaler= matrixload_scaler-puttextresize;
 
-
             INDArray outputs = model.outputSingle(inputImage);
             List<DetectedObject> objs = yout.getPredictedObjects(outputs, detectionThreshold);
             //List<DetectedObject> objects = NonMaxSuppression.getObjects(objs);
@@ -103,8 +105,6 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
             long predict= System.nanoTime();
             long elapsed_time_predict= predict-matrixload_scaler;
 
-
-//
             for (DetectedObject obj : objs) {
 //            for (DetectedObject obj : objects) {
                 double[] xy1 = obj.getTopLeftXY();
@@ -120,7 +120,6 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
             long draw= System.nanoTime();
             long elapsed_time_draw= draw-predict;
             long elasped_time_total = elapsed_time_puttextresize+elapsed_time_matrixload_scaler+elapsed_time_predict+elapsed_time_draw;
-
 
             long elapsed_time_puttextresize_ms= TimeUnit.MILLISECONDS.convert(elapsed_time_puttextresize,TimeUnit.NANOSECONDS);
             long elapsed_time_matrixload_scaler_ms= TimeUnit.MILLISECONDS.convert(elapsed_time_matrixload_scaler,TimeUnit.NANOSECONDS);
@@ -142,32 +141,34 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
 
     }
 
-    private class AsyncTaskLoader extends AsyncTask<Void, Void, Void>
-    {
+    private class LoadFiles extends AsyncTask<Void, Void, Void> {
         @Override
         protected void onPreExecute() {
-            super.onPreExecute();
+//            super.onPreExecute();
         }
 
         @Override
         protected Void doInBackground(Void... params) {
+
             try {
-                model =ModelSerializer.restoreComputationGraph(getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/tiny-yolo-voc_dl4j_inference.v2.zip");
+                model =ModelSerializer.restoreComputationGraph(getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/tiny-yolo-voc_dl4j_inference.v2.zip",false);
                 Log.i(LOG_TAG,"Model is successfully loaded!");
                 Log.i(LOG_TAG,model.summary());
 
                 labels = new VOCLabelsAndroid();
                 Log.i(LOG_TAG,"Labels is successfully loaded!");
                 Log.i(LOG_TAG,labels.getLabels().toString());
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             yout = (org.deeplearning4j.nn.layers.objdetect.Yolo2OutputLayer) model.getOutputLayer(0);
 
             return null;
+        }
 
+        @Override
+        public void onPostExecute(Void result) {
+//            super.onPostExecute();
         }
     }
 }
