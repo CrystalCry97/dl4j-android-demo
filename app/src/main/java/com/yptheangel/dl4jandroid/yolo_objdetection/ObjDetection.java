@@ -5,7 +5,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
-
 import com.yptheangel.dl4jandroid.yolo_objdetection.utils.VOCLabelsAndroid;
 
 import static android.os.Environment.getExternalStoragePublicDirectory;
@@ -18,7 +17,6 @@ import org.datavec.image.loader.NativeImageLoader;
 import org.datavec.image.transform.ColorConversionTransform;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.layers.objdetect.DetectedObject;
-import org.deeplearning4j.nn.layers.objdetect.Yolo2OutputLayer;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
@@ -27,7 +25,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class ObjDetection extends Activity implements CvCameraPreview.CvCameraViewListener {
+    public class ObjDetection extends Activity implements CvCameraPreview.CvCameraViewListener {
+
     private CvCameraPreview cameraView;
     String LOG_TAG="DEMO_ObjDetection";
 
@@ -37,7 +36,6 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
     private static final int tinyyolowidth = 416;
     private static final int tinyyoloheight = 416;
 
-//    Yolo2OutputLayer yout=null;
     org.deeplearning4j.nn.layers.objdetect.Yolo2OutputLayer yout=null;
 
     ComputationGraph model =null;
@@ -48,7 +46,6 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
     ImagePreProcessingScaler scaler = new ImagePreProcessingScaler(0, 1);
 
     @Override
-//    protected void onCreate(@Nullable Bundle savedInstanceState) {
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
@@ -63,7 +60,6 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-//        absoluteFaceSize = (int) (width * 0.32f);
     }
 
     @Override
@@ -71,18 +67,14 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
     }
 
     @Override
-    public Mat onCameraFrame(Mat rgbaMat) {
+    public Mat onCameraFrame(Mat rgbaMat)  {
 
-//        //As mentioned in docs, input image should be converted to RGB and scaled to range 0 to 1.
-//        NativeImageLoader loader = new NativeImageLoader(tinyyolowidth, tinyyoloheight, 3, new ColorConversionTransform(COLOR_BGR2RGB));
-//        ImagePreProcessingScaler scaler = new ImagePreProcessingScaler(0, 1);
         int w = rgbaMat.cols();
         int h = rgbaMat.rows();
         INDArray inputImage = null;
-        Mat resizedImage = new Mat();//rawImage);
+        Mat resizedImage = new Mat();
 
         if (model != null) {
-//            Mat rawFrame = new Mat(rgbaMat.rows(), rgbaMat.cols());
             long start_time=System.nanoTime();
             putText(rgbaMat, "Model loaded", new Point(70, 40), FONT_HERSHEY_DUPLEX, 1, Scalar.GREEN);
             resize(rgbaMat, resizedImage, new Size(tinyyolowidth, tinyyoloheight));
@@ -100,13 +92,14 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
 
             INDArray outputs = model.outputSingle(inputImage);
             List<DetectedObject> objs = yout.getPredictedObjects(outputs, detectionThreshold);
+
             //List<DetectedObject> objects = NonMaxSuppression.getObjects(objs);
 
             long predict= System.nanoTime();
             long elapsed_time_predict= predict-matrixload_scaler;
+            Log.i(LOG_TAG, "Before for loop: " + objs.toString());
 
             for (DetectedObject obj : objs) {
-//            for (DetectedObject obj : objects) {
                 double[] xy1 = obj.getTopLeftXY();
                 double[] xy2 = obj.getBottomRightXY();
                 String label = labels.getLabel(obj.getPredictedClass());
@@ -117,34 +110,28 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
                 rectangle(rgbaMat, new Point(x1, y1), new Point(x2, y2), Scalar.RED, 2, 0, 0);
                 putText(rgbaMat, label, new Point(x1 + 2, y2 - 2), FONT_HERSHEY_DUPLEX, 1, Scalar.GREEN);
             }
-            long draw= System.nanoTime();
-            long elapsed_time_draw= draw-predict;
-            long elasped_time_total = elapsed_time_puttextresize+elapsed_time_matrixload_scaler+elapsed_time_predict+elapsed_time_draw;
+            long draw = System.nanoTime();
+            long elapsed_time_draw = draw - predict;
+            long elasped_time_total = elapsed_time_puttextresize + elapsed_time_matrixload_scaler + elapsed_time_predict + elapsed_time_draw;
 
-            long elapsed_time_puttextresize_ms= TimeUnit.MILLISECONDS.convert(elapsed_time_puttextresize,TimeUnit.NANOSECONDS);
-            long elapsed_time_matrixload_scaler_ms= TimeUnit.MILLISECONDS.convert(elapsed_time_matrixload_scaler,TimeUnit.NANOSECONDS);
-            long elapsed_time_matrixload_predict_ms= TimeUnit.MILLISECONDS.convert(elapsed_time_predict,TimeUnit.NANOSECONDS);
-            long elapsed_time_matrixload_draw_ms= TimeUnit.MILLISECONDS.convert(elapsed_time_draw,TimeUnit.NANOSECONDS);
-            long elasped_time_total_ms= TimeUnit.MILLISECONDS.convert(elasped_time_total,TimeUnit.NANOSECONDS);
+            long elapsed_time_puttextresize_ms = TimeUnit.MILLISECONDS.convert(elapsed_time_puttextresize, TimeUnit.NANOSECONDS);
+            long elapsed_time_matrixload_scaler_ms = TimeUnit.MILLISECONDS.convert(elapsed_time_matrixload_scaler, TimeUnit.NANOSECONDS);
+            long elapsed_time_matrixload_predict_ms = TimeUnit.MILLISECONDS.convert(elapsed_time_predict, TimeUnit.NANOSECONDS);
+            long elapsed_time_matrixload_draw_ms = TimeUnit.MILLISECONDS.convert(elapsed_time_draw, TimeUnit.NANOSECONDS);
+            long elasped_time_total_ms = TimeUnit.MILLISECONDS.convert(elasped_time_total, TimeUnit.NANOSECONDS);
 
-            Log.i(LOG_TAG,"putextresize: "+elapsed_time_puttextresize_ms+" ms");
-            Log.i(LOG_TAG,"scaler: "+elapsed_time_matrixload_scaler_ms+" ms");
-            Log.i(LOG_TAG,"predict: "+elapsed_time_matrixload_predict_ms+" ms");
-            Log.i(LOG_TAG,"draw: "+elapsed_time_matrixload_draw_ms+" ms");
-            Log.i(LOG_TAG,"total: "+elasped_time_total_ms+" ms");
-
-//            long elapsed_time= System.nanoTime()-start_time;
-//            long elapsed_time_milliseconds= TimeUnit.MILLISECONDS.convert(elapsed_time,TimeUnit.NANOSECONDS);
-//            Log.i(LOG_TAG,"Model inference per frame took "+elapsed_time_milliseconds+" ms");
+            Log.i(LOG_TAG, "puttextresize: " + elapsed_time_puttextresize_ms + " ms");
+            Log.i(LOG_TAG, "scaler: " + elapsed_time_matrixload_scaler_ms + " ms");
+            Log.i(LOG_TAG, "predict: " + elapsed_time_matrixload_predict_ms + " ms");
+            Log.i(LOG_TAG, "drawBB: " + elapsed_time_matrixload_draw_ms + " ms");
+            Log.i(LOG_TAG, "total: " + elasped_time_total_ms + " ms");
         }
         return rgbaMat;
-
     }
 
-    private class LoadFiles extends AsyncTask<Void, Void, Void> {
+        private class LoadFiles extends AsyncTask<Void, Void, Void> {
         @Override
         protected void onPreExecute() {
-//            super.onPreExecute();
         }
 
         @Override
@@ -156,7 +143,7 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
                 Log.i(LOG_TAG,model.summary());
 
                 labels = new VOCLabelsAndroid();
-                Log.i(LOG_TAG,"Labels is successfully loaded!");
+                Log.i(LOG_TAG,"Labels are successfully loaded!");
                 Log.i(LOG_TAG,labels.getLabels().toString());
             } catch (IOException e) {
                 e.printStackTrace();
@@ -168,8 +155,9 @@ public class ObjDetection extends Activity implements CvCameraPreview.CvCameraVi
 
         @Override
         public void onPostExecute(Void result) {
-//            super.onPostExecute();
         }
     }
 }
+
+
 
